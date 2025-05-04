@@ -1,38 +1,29 @@
 import { fastifyCors } from "@fastify/cors";
 import { fastify } from "fastify";
 import {
-	hasZodFastifySchemaValidationErrors,
 	jsonSchemaTransform,
 	serializerCompiler,
 	validatorCompiler,
 } from "fastify-type-provider-zod";
-import { createLink } from "./rotes/create-link";
+import { createLinkRoute } from "./rotes/create-link";
 import fastifyMultipart from "@fastify/multipart";
 import fastifySwagger from "@fastify/swagger";
 import fastifySwaggerUi from "@fastify/swagger-ui";
+import { env } from "@/env";
+import { globalErrorHandler } from "./global-error-handle";
+import { removeLinkRoute } from "./rotes/remove-link";
+import { getLinkRoute } from "./rotes/get-link";
 
 const server = fastify();
 
 server.setValidatorCompiler(validatorCompiler);
 server.setSerializerCompiler(serializerCompiler);
 
-server.setErrorHandler((error, request, reply) => {
-	if (hasZodFastifySchemaValidationErrors(error)) {
-		return reply.code(400).send({
-			message: "Validation error",
-			issues: error.validation,
-		});
-	}
-
-	console.error(error);
-
-	return reply.code(500).send({
-		message: "Internal server error",
-	});
-});
+server.setErrorHandler(globalErrorHandler);
 
 server.register(fastifyCors, {
-	origin: "*",
+	origin: env.CORS_ORIGINS,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
 });
 
 server.register(fastifyMultipart);
@@ -47,7 +38,9 @@ server.register(fastifySwagger, {
 });
 server.register(fastifySwaggerUi, { routePrefix: '/docs'});
 
-server.register(createLink);
+server.register(createLinkRoute);
+server.register(removeLinkRoute);
+server.register(getLinkRoute);
 
 server
 	.listen({

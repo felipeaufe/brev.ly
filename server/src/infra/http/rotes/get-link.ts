@@ -1,16 +1,16 @@
-import { AlreadyExistsError } from "@/app/errors/already-exists-error";
-import { createLink } from "@/app/functions/create-link";
-import { createLinkSchema } from "@/infra/schemas/link-schema";
+import { DoesNotExistsError } from "@/app/errors/does-not-exists-error";
+import { getLink } from "@/app/functions/get-link";
+import { getLinkSchema } from "@/infra/schemas/link-schema";
 import { isSuccess, unwrapEither } from "@/shared/either";
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { z } from "zod";
 
-export const createLinkRoute: FastifyPluginAsyncZod = async server => {
+export const getLinkRoute: FastifyPluginAsyncZod = async server => {
   
-  server.post('/link', {
+  server.get('/link/:code', {
     schema: {
-      summary: "Create a new link",
-      body: createLinkSchema,
+      summary: "Get an existent link",
+      params: getLinkSchema,
       response: {
         201: z.object({
           code: z.string(),
@@ -27,29 +27,25 @@ export const createLinkRoute: FastifyPluginAsyncZod = async server => {
               message: z.string(),
             })
           ),
-        })
-        .describe("Validation error"),
-        409: z.object({ message: z.string() }),
+        }),
+        404: z.object({ message: z.string() })
       }
     }
   }, async (request, reply) => {
 
-    const { link, code } = request.body;
+    const { code } = request.params;
 
-    const result = await createLink({
-      link,
-      code
-    })
+    const result = await getLink({ code })
 
     if (isSuccess(result)) {
       const { data } = unwrapEither(result)
-      return reply.status(201).send(data)
+      return reply.status(200).send(data)
     }
 
     const error = unwrapEither(result)
     
-    if (error.constructor.name === AlreadyExistsError.name) {
-        return reply.status(409).send({ message: error.message })
+    if (error.constructor.name === DoesNotExistsError.name) {
+        return reply.status(404).send({ message: error.message })
     }
 
     throw new Error("Internal server error")
