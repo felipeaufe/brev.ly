@@ -3,6 +3,8 @@ import { db } from "@/infra/db";
 import { getLinkSchema } from "../../infra/schemas/link-schema";
 import { makeError, makeSuccess } from "@/shared/either";
 import { DoesNotExistsError } from "../errors/does-not-exists-error";
+import { schema } from "@/infra/db/schemas";
+import { eq } from "drizzle-orm";
 
 type GetLink = z.infer<typeof getLinkSchema>
 
@@ -21,5 +23,9 @@ export async function getLink (data: GetLink) {
     )
   }
 
-  return makeSuccess({ data: link })
+  await db.update(schema.links)
+  .set({ accessCount: link.accessCount + 1 })
+  .where(eq(schema.links.code, code));
+
+  return makeSuccess({ data: { ...link, accessCount: link.accessCount + 1} })
 }
