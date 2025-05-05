@@ -14,22 +14,34 @@ import {
 import { createFormSchema } from './form-schema'
 import { useLinkStore } from '@/store/links.store'
 import { cn } from '@/lib/utils'
+import { http } from '@/api/api'
+import { toast } from 'sonner'
+import { useState } from 'react'
 
 const NewLink = () => {
-  const { links } = useLinkStore()
+  const [ loading, setLoading ] = useState(false);
+  const { links, addLink } = useLinkStore()
   const formSchema = createFormSchema(links)
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     mode: 'onChange',
     defaultValues: {
-      originalUrl: "",
-      shortUrl: "",
+      link: "",
+      code: "",
     },
   })
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values)
+    setLoading(true)
+
+    http.shortLink.create(values).then((response) => {
+      form.reset()
+      toast.success("Link criado com sucesso!")
+
+      addLink(response);
+      
+    }).finally(() => setLoading(false))
   }
 
   return (
@@ -46,7 +58,7 @@ const NewLink = () => {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <FormField
               control={form.control}
-              name="originalUrl"
+              name="link"
               render={({ field }) => (
                 <FormItem >
                   <FormLabel className='flex flex-col items-start [&>*]:w-full'>
@@ -62,7 +74,7 @@ const NewLink = () => {
             />
             <FormField
               control={form.control}
-              name="shortUrl"
+              name="code"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className='flex flex-col items-start [&>*]:w-full'>
@@ -79,7 +91,7 @@ const NewLink = () => {
                 </FormItem>
               )}
             />
-            <Button className={cn("w-full", form.formState.isValid ? "" : "opacity-50")}>Salvar link</Button>
+            <Button className={cn("w-full", form.formState.isValid ? "" : "opacity-50")} disabled={loading}>{ loading ? "Salvando..." : "Salvar link"}</Button>
           </form>
         </Form>
 

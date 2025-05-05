@@ -1,43 +1,52 @@
 import { Button } from '@/components/ui/button'
 import { DownloadSimple, Link } from '@phosphor-icons/react'
-import React, { useEffect } from 'react'
-import { ShortLink, type  ShortLinkProps } from './short-link'
+import React, { useEffect, useState } from 'react'
+import { ShortLink } from './short-link'
 import { http } from '@/api/api'
-import { exportCSV } from '@/utils/export-csv'
 import { toast } from 'sonner'
 import { useLinkStore } from '@/store/links.store'
 
 const LinkList = () => {
+  const [loading, setLoading ] = useState(false);
   const { links, setLinks } = useLinkStore();
 
   useEffect(() => {
-    http.shortLink.fetch<ShortLinkProps[]>().then((links) => {
+    http.shortLink.fetch().then((links) => {
       setLinks(links)
     })
   }, [setLinks])
   
   const handleOnDownload = () => {
-    try {
-      exportCSV(links, 'links.csv');
+    setLoading(true)
+
+    http.shortLink.export().then(({ url }) => {
+
+      window.open(url, '_blank');
+
       toast.success("Links exportados com sucesso!")
-    } catch (error) {
+    })
+    .catch(error => {
       console.error(error);
       toast.error("Ocorreu um erro ao tentar exportar os links.")
-    }
+    })
+    .finally(() => {
+      setLoading(false)
+    });
+
   }
 
   return (
     <div className="card w-full md:max-w-[580px] md:mt-14">
       <div className="flex justify-between items-center mb-5">
         <p className="text-lg">Meus links</p>
-        <Button variant="secondary" onClick={handleOnDownload}>
-          <DownloadSimple /> Baixar CSV
+        <Button variant="secondary" onClick={handleOnDownload} disabled={loading}>
+          <DownloadSimple /> { loading ? 'Baixando...' : 'Baixar CSV'}
         </Button>
       </div>
 
       <div>
         {links.map(link => (
-          <React.Fragment key={link.shortLink}>
+          <React.Fragment key={link.code}>
             <hr className="border-gray-200 my-4" />
             <ShortLink {...link} />
           </React.Fragment>

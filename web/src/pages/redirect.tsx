@@ -13,6 +13,7 @@ export function Redirect() {
     if (pathName && !hasFetched.current) {
       hasFetched.current = true;
       updateCount(pathName);
+
       http.originalLink.get(pathName).then((link) => {
       setLink(link);
       window.location.href = link

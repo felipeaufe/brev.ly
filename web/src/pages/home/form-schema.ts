@@ -2,10 +2,10 @@ import type { Link } from "@/store/links.store";
 import { z } from "zod"
 
 export const createFormSchema = (links: Link[]) => {
-  const existing = new Set(links.map(link => link.shortLink))
+  const existing = new Set(links.map(link => link.code))
 
   return z.object({
-    originalUrl: z
+    link: z
     .string()
     .trim()
     .transform((value) => (RegExp(/^https?:\/\//).exec(value) ? value : `https://${value}`))
@@ -17,7 +17,7 @@ export const createFormSchema = (links: Link[]) => {
       }
     }, { message: 'Informe uma URL válida.' }),
     
-    shortUrl: z
+    code: z
       .string()
       .min(3, { message: 'Informe pelo menos 3 caracteres.' })
       .regex(/^[a-zA-Z0-9-]+$/, {

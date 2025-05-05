@@ -1,34 +1,50 @@
-const responseValidate = (response: Response) => {
-  if (!response.ok) {
-    console.error(response)
-    throw new Error(response.statusText)
-  }
-
-  return response.json()
-}
-
+import { Link } from "@/store/links.store";
+import { client } from "./client";
 
 const originalLink = {
 
   get: async (code: string): Promise<string> => {
-    const response = await fetch(`/api/shorten/${code}`)
-    
-    return responseValidate(response);
+    const response = await client<Link>(`link/${code}`)
+
+    return response.link;
   }
 }
 
 const shortLink = {
-  fetch: async <T>(): Promise<T> => {
-    const response = await fetch('/api/shorten')
-    return responseValidate(response);  
-  },
-
-  delete: async (code: string): Promise<Response> => {
-    const response = await fetch(`/api/shorten/${code}`, {
-      method: 'DELETE'
+  create: async (data: {link: string, code: string}): Promise<Link> => {
+    const response = await client<Link>(`link`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
     })
 
-    return responseValidate(response);
+    return response;
+  },
+
+  fetch: async (): Promise<Link[]> => {
+    const response = await client<Link[]>(`link`)
+
+    return response;  
+  },
+
+  delete: async (code: string): Promise<boolean> => {
+    const response = await client<boolean>(`link`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({code})
+    })
+
+    return response;
+  },
+
+  export: async (): Promise<{url: string}> => {
+    const response = await client<{url: string}>('link/export')
+    
+    return response;
   }
 }
 
