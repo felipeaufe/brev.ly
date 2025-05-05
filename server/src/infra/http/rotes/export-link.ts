@@ -1,30 +1,27 @@
-import { geAllLink } from "@/app/functions/get-all-link";
+import { exportLinks } from "@/app/functions/export-links";
 import { isSuccess, unwrapEither } from "@/shared/either";
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { z } from "zod";
 
-export const getAllLinkRoute: FastifyPluginAsyncZod = async server => {
+export const exportLinksRoute: FastifyPluginAsyncZod = async server => {
   
-  server.get('/link', {
+  server.get('/link/export', {
     schema: {
       summary: "Get an existent link",
       response: {
-        200: z.array(z.object({
-          code: z.string(),
-          link: z.string(),
-          accessCount: z.number(),
-          createdAt: z.date(),
-        })),
+        200: z.object({
+          url: z.string(),
+        })
       }
     }
-  }, async (request, reply) => {
-    const result = await geAllLink()
+  }, async (_, reply) => {
+    const result = await exportLinks()
 
     if (isSuccess(result)) {
       const { data } = unwrapEither(result)
       return reply.status(200).send(data)
     }
-  
+
     throw new Error("Internal server error")
   })
 }

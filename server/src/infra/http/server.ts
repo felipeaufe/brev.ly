@@ -13,7 +13,8 @@ import { env } from "@/env";
 import { globalErrorHandler } from "./global-error-handle";
 import { removeLinkRoute } from "./rotes/remove-link";
 import { getLinkRoute } from "./rotes/get-link";
-import { getAllLinkRoute } from "./rotes/fetch-link";
+import { getAllLinksRoute } from "./rotes/get-all-links";
+import { exportLinksRoute } from "./rotes/export-link";
 
 const server = fastify();
 
@@ -41,8 +42,9 @@ server.register(fastifySwaggerUi, { routePrefix: '/docs'});
 
 server.register(createLinkRoute);
 server.register(removeLinkRoute);
+server.register(exportLinksRoute);
 server.register(getLinkRoute);
-server.register(getAllLinkRoute);
+server.register(getAllLinksRoute);
 
 server
 	.listen({
