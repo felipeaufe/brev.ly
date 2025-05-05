@@ -7,6 +7,7 @@ import { db, pg } from "@/infra/db";
 import { schema } from "@/infra/db/schemas";
 import { desc } from "drizzle-orm";
 import { PassThrough, Transform } from "stream";
+import { env } from "@/env";
 
 export async function exportLinks () {
   
@@ -40,9 +41,12 @@ export async function exportLinks () {
     cursor,
     new Transform({
       objectMode:true,
-      transform(chunks: unknown[], encoding, callback) {
+      transform(chunks: any[], encoding, callback) {
         for(const chunk of chunks) {
-          this.push(chunk);
+          this.push({
+            ...chunk,
+            code: `${env.CORS_ORIGINS}/${chunk.code}`
+          });
         }
 
         callback();
